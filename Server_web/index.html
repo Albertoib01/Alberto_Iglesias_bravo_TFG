@@ -70,7 +70,8 @@
   </div>
 
   <script>
-    let estadoActual = "Mano abierta"; // Estado inicial
+    let estadoActual = "Mano abierta"; 
+    let debounceTimers ={};
 
     window.onload = function() {
       fetch('/estado')
@@ -91,17 +92,21 @@
       if (servo === 4 || servo === 5) {
         valor = 45 - valor;
       }
+      
       document.getElementById(`posServo${servo}`).textContent = valor;
 
-      fetch(`/servo${servo}?pos=${valor}`)
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById("estado").textContent = `Servo ${servo}: ${data}`;
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          document.getElementById("estado").textContent = "Error al comunicarse con el servidor.";
-        });
+      clearTimeout(debounceTimers[servo]);
+      debounceTimers[servo] = setTimeout(() => {   
+        fetch(`/servo${servo}?pos=${valor}`)
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById("estado").textContent = `Servo ${servo}: ${data}`;
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            document.getElementById("estado").textContent = "Error al comunicarse con el servidor.";
+          });
+      }, 500); 
     }
 
     function controlarServo(comando, nuevoEstado) {
@@ -119,7 +124,7 @@
     }
 
     function enviarPalabra() {
-      var palabra = document.getElementById("inputPalabra").value.toLowerCase(); // Convertir a minúsculas
+      var palabra = document.getElementById("inputPalabra").value.toLowerCase(); 
       if (palabra.trim() === "") {
         document.getElementById("mensaje").textContent = "Por favor, introduce una palabra.";
         return;
